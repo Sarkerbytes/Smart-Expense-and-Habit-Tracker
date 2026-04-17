@@ -229,8 +229,7 @@ const css = `
   @import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500;600&display=swap');
 `;
 
-const getUsers  = () => JSON.parse(localStorage.getItem('se_users')  || '[]');
-const saveUsers = u  => localStorage.setItem('se_users', JSON.stringify(u));
+// Database functions now replaced with API calls
 
 export default function LoginPage() {
   const [dark,      setDark]      = useState(true);
@@ -260,11 +259,9 @@ export default function LoginPage() {
   const [signupMsg, setSignupMsg] = useState(null);
   const [adminMsg,  setAdminMsg]  = useState(null);
 
-  // Seed demo user once
+  // Removed seed demo user as we use real backend now
   useEffect(() => {
-    if (!getUsers().length) {
-      saveUsers([{ name: 'Demo User', email: 'demo@user.com', username: 'demouser', password: 'demo123' }]);
-    }
+    // Left intentionally blank
   }, []);
 
   // Enter key
@@ -293,40 +290,71 @@ export default function LoginPage() {
   };
 
   // ── Login ──
-  const doLogin = () => {
+  const doLogin = async () => {
     if (!loginId || !loginPass) { setLoginMsg({ type: 'error', text: 'Please fill in all fields.' }); return; }
     setLoading(true);
-    setTimeout(() => {
-      const user = getUsers().find(u => (u.email === loginId || u.username === loginId) && u.password === loginPass);
+    try {
+      const res = await fetch('http://localhost:5000/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: loginId, password: loginPass })
+      });
+      const data = await res.json();
       setLoading(false);
-      if (user) {
-        localStorage.setItem('se_session', JSON.stringify({ name: user.name, email: user.email, role: 'user' }));
-        redirectTo('👤', 'Welcome back, ' + user.name.split(' ')[0] + '!', 'Loading your dashboard…');
+      
+      if (data.success) {
+        localStorage.setItem('se_session', JSON.stringify({ 
+          name: data.user.name, 
+          email: data.user.email, 
+          role: 'user', 
+          token: data.token,
+          id: data.user.id
+        }));
+        redirectTo('👤', 'Welcome back, ' + data.user.name.split(' ')[0] + '!', 'Loading your dashboard…');
       } else {
-        setLoginMsg({ type: 'error', text: 'Invalid credentials. Check your username/email and password.' });
+        setLoginMsg({ type: 'error', text: data.message || 'Invalid credentials.' });
       }
-    }, 900);
+    } catch (err) {
+      setLoading(false);
+      setLoginMsg({ type: 'error', text: 'Failed to connect to server.' });
+    }
   };
 
   // ── Signup ──
-  const doSignup = () => {
+  const doSignup = async () => {
     if (!regName || !regEmail || !regPass) { setSignupMsg({ type: 'error', text: 'All fields are required.' }); return; }
     if (!/\S+@\S+\.\S+/.test(regEmail))    { setSignupMsg({ type: 'error', text: 'Please enter a valid email address.' }); return; }
     if (regPass.length < 6)                 { setSignupMsg({ type: 'error', text: 'Password must be at least 6 characters.' }); return; }
-    const users = getUsers();
-    if (users.find(u => u.email === regEmail)) { setSignupMsg({ type: 'error', text: 'This email is already registered.' }); return; }
     setLoading(true);
-    const username = regName.toLowerCase().replace(/\s+/g, '') + Math.floor(Math.random() * 100);
-    setTimeout(() => {
-      users.push({ name: regName, email: regEmail, username, password: regPass });
-      saveUsers(users);
+    try {
+      const res = await fetch('http://localhost:5000/api/auth/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: regName, email: regEmail, password: regPass })
+      });
+      const data = await res.json();
       setLoading(false);
-      setSignupMsg({ type: 'success', text: 'Account created! Your username: ' + username });
-      setTimeout(() => {
-        localStorage.setItem('se_session', JSON.stringify({ name: regName, email: regEmail, role: 'user' }));
-        redirectTo('🎉', 'Welcome, ' + regName.split(' ')[0] + '!', 'Setting up your dashboard…');
-      }, 1600);
-    }, 1000);
+
+      if (data.success) {
+        setSignupMsg({ type: 'success', text: 'Account created! Redirecting...' });
+        setTimeout(() => {
+          localStorage.setItem('se_session', JSON.stringify({ 
+            name: data.user.name, 
+            email: data.user.email, 
+            role: 'user', 
+            token: data.token,
+            id: data.user.id
+          }));
+          redirectTo('🎉', 'Welcome, ' + data.user.name.split(' ')[0] + '!', 'Setting up your dashboard…');
+        }, 1600);
+      } else {
+        const errorMsg = data.errors ? data.errors[0].msg : data.message || 'Signup failed.';
+        setSignupMsg({ type: 'error', text: errorMsg });
+      }
+    } catch (err) {
+      setLoading(false);
+      setSignupMsg({ type: 'error', text: 'Failed to connect to server.' });
+    }
   };
 
   // ── Admin ──

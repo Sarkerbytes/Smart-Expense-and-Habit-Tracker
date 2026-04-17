@@ -160,19 +160,44 @@ export default function DashboardPage() {
 
   /* Load data on mount */
   useEffect(() => {
-    // Auth guard
     const session = load('se_session', null);
-    if (!session || !session.name) {
+    if (!session || !session.token) {
       window.location.href = '/login';
       return;
     }
-    seedData();
-    const savedUser = load('se_user_profile', null);
-    const u = savedUser || { name: session.name || 'User', email: session.email || '', monthlyBudget: 35000 };
-    setUser(u);
-    setProfForm({ name: u.name, email: u.email, monthlyBudget: u.monthlyBudget, newPw:'', curPw:'' });
-    setExpenses(load('se_expenses', []));
-    setHabits(load('se_habits', []));
+    
+    const fetchData = async () => {
+      try {
+        const headers = { Authorization: `Bearer ${session.token}` };
+        const [uRes, eRes, hRes] = await Promise.all([
+          fetch('http://localhost:5000/api/auth/me', { headers }),
+          fetch('http://localhost:5000/api/expenses', { headers }),
+          fetch('http://localhost:5000/api/habits', { headers }),
+        ]);
+        const uo = await uRes.json();
+        const eo = await eRes.json();
+        const ho = await hRes.json();
+        
+        if (uo.success) {
+          setUser(uo.user);
+          setProfForm({ name: uo.user.name, email: uo.user.email, monthlyBudget: uo.user.monthlyBudget, newPw:'', curPw:'' });
+        } else {
+          localStorage.removeItem('se_session');
+          window.location.href = '/login';
+        }
+        
+        if (eo.success) {
+          setExpenses(eo.expenses.map(e => ({...e, id: e._id})));
+        }
+        if (ho.success) {
+          setHabits(ho.habits.map(h => ({...h, id: h._id})));
+        }
+      } catch (err) {
+        console.error('Failed to load data', err);
+      }
+    };
+    fetchData();
+
     const savedTheme = localStorage.getItem('se_theme');
     if (savedTheme) setDark(savedTheme === 'dark');
   }, []);
@@ -226,26 +251,56 @@ export default function DashboardPage() {
     alerts.push({ type:'success', icon:'✅', msg: 'All good! Your spending and habits look healthy.' });
 
   /* ── Expense CRUD ── */
-  const saveExpense = () => {
+  const saveExpense = async () => {
     if (!expForm.amount || isNaN(expForm.amount) || +expForm.amount <= 0)
       return showToast('Enter a valid amount.', 'error');
     if (!expForm.date) return showToast('Select a date.', 'error');
-    let updated;
-    if (editingExp) {
-      updated = expenses.map(e => e.id === editingExp ? { ...expForm, id: editingExp, amount: +expForm.amount } : e);
-      showToast('Expense updated! ✏️');
-    } else {
-      updated = [{ ...expForm, id: uid(), amount: +expForm.amount }, ...expenses];
-      showToast('Expense added! 💸');
+    
+    const session = load('se_session', null);
+    if (!session) return;
+    const headers = { 'Content-Type': 'application/json', Authorization: `Bearer ${session.token}` };
+    const payload = { ...expForm, amount: +expForm.amount };
+
+    try {
+      if (editingExp) {
+        const res = await fetch(`http://localhost:5000/api/expenses/${editingExp}`, { method: 'PUT', headers, body: JSON.stringify(payload) });
+        const data = await res.json();
+        if (data.success) {
+          setExpenses(expenses.map(e => e.id === editingExp ? { ...data.expense, id: data.expense._id } : e));
+          showToast('Expense updated! ✏️');
+        } else {
+          showToast(data.message || 'Error updating expense', 'error');
+        }
+      } else {
+        const res = await fetch('http://localhost:5000/api/expenses', { method: 'POST', headers, body: JSON.stringify(payload) });
+        const data = await res.json();
+        if (data.success) {
+          setExpenses([{ ...data.expense, id: data.expense._id }, ...expenses]);
+          showToast('Expense added! 💸');
+        } else {
+          showToast(data.message || 'Error adding expense', 'error');
+        }
+      }
+    } catch (err) {
+      showToast('Connection error', 'error');
     }
-    setExpenses(updated); save('se_expenses', updated);
     setExpForm({ date: today(), amount:'', category:'food', description:'' });
     setEditingExp(null); setModal(null);
   };
-  const deleteExpense = id => {
-    const updated = expenses.filter(e => e.id !== id);
-    setExpenses(updated); save('se_expenses', updated);
-    showToast('Expense deleted.', 'info');
+  const deleteExpense = async id => {
+    const session = load('se_session', null);
+    try {
+      const res = await fetch(`http://localhost:5000/api/expenses/${id}`, { method: 'DELETE', headers: { Authorization: `Bearer ${session.token}` } });
+      const data = await res.json();
+      if (data.success) {
+        setExpenses(expenses.filter(e => e.id !== id));
+        showToast('Expense deleted.', 'info');
+      } else {
+        showToast(data.message || 'Error deleting', 'error');
+      }
+    } catch (e) {
+      showToast('Connection error', 'error');
+    }
   };
   const startEditExp = e => {
     setExpForm({ date: e.date, amount: e.amount, category: e.category, description: e.description || '' });
@@ -253,28 +308,55 @@ export default function DashboardPage() {
   };
 
   /* ── Habit CRUD ── */
-  const saveHabit = () => {
+  const saveHabit = async () => {
     const { date, study, sleep, exercise } = habitForm;
     if (!date || !study || !sleep || !exercise) return showToast('Fill all habit fields.', 'error');
-    let updated;
-    if (editingHabit) {
-      updated = habits.map(h => h.id === editingHabit
-        ? { id: editingHabit, date, study: +study, sleep: +sleep, exercise: +exercise } : h);
-      showToast('Habit updated! ✏️');
-    } else {
-      const exists = habits.find(h => h.date === date);
-      if (exists) { showToast("You've already logged today's habits.", 'error'); return; }
-      updated = [{ id: uid(), date, study: +study, sleep: +sleep, exercise: +exercise }, ...habits];
-      showToast('Habits logged! 🧠');
+    
+    const session = load('se_session', null);
+    if (!session) return;
+    const headers = { 'Content-Type': 'application/json', Authorization: `Bearer ${session.token}` };
+    const payload = { date, study: +study, sleep: +sleep, exercise: +exercise };
+
+    try {
+      if (editingHabit) {
+        const res = await fetch(`http://localhost:5000/api/habits/${editingHabit}`, { method: 'PUT', headers, body: JSON.stringify(payload) });
+        const data = await res.json();
+        if (data.success) {
+          setHabits(habits.map(h => h.id === editingHabit ? { ...data.habit, id: data.habit._id } : h));
+          showToast('Habit updated! ✏️');
+        } else {
+          showToast(data.message || 'Error updating habit', 'error');
+        }
+      } else {
+        const res = await fetch('http://localhost:5000/api/habits', { method: 'POST', headers, body: JSON.stringify(payload) });
+        const data = await res.json();
+        if (data.success) {
+          setHabits([{ ...data.habit, id: data.habit._id }, ...habits]);
+          showToast('Habits logged! 🧠');
+        } else {
+          showToast(data.message || 'Error logging habit', 'error');
+        }
+      }
+    } catch (err) {
+      showToast('Connection error', 'error');
     }
-    setHabits(updated); save('se_habits', updated);
     setHabitForm({ date: today(), study:'', sleep:'', exercise:'' });
     setEditingHabit(null); setModal(null);
   };
-  const deleteHabit = id => {
-    const updated = habits.filter(h => h.id !== id);
-    setHabits(updated); save('se_habits', updated);
-    showToast('Habit entry deleted.', 'info');
+  const deleteHabit = async id => {
+    const session = load('se_session', null);
+    try {
+      const res = await fetch(`http://localhost:5000/api/habits/${id}`, { method: 'DELETE', headers: { Authorization: `Bearer ${session.token}` } });
+      const data = await res.json();
+      if (data.success) {
+        setHabits(habits.filter(h => h.id !== id));
+        showToast('Habit entry deleted.', 'info');
+      } else {
+        showToast(data.message || 'Error deleting', 'error');
+      }
+    } catch (e) {
+      showToast('Connection error', 'error');
+    }
   };
   const startEditHabit = h => {
     setHabitForm({ date: h.date, study: h.study, sleep: h.sleep, exercise: h.exercise });
@@ -282,11 +364,30 @@ export default function DashboardPage() {
   };
 
   /* ── Profile save ── */
-  const saveProfile = () => {
+  const saveProfile = async () => {
     if (!profForm.name) return showToast('Name is required.', 'error');
-    const updated = { name: profForm.name, email: profForm.email, monthlyBudget: +profForm.monthlyBudget || 0 };
-    setUser(updated); save('se_user_profile', updated);
-    showToast('Profile saved! 👤');
+    
+    const session = load('se_session', null);
+    if (!session) return;
+    
+    try {
+      const res = await fetch('http://localhost:5000/api/auth/me', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${session.token}` },
+        body: JSON.stringify({ name: profForm.name, email: profForm.email, monthlyBudget: +profForm.monthlyBudget || 0 })
+      });
+      const data = await res.json();
+      if (data.success) {
+        setUser(data.user);
+        // Also update local storage session name just in case
+        localStorage.setItem('se_session', JSON.stringify({ ...session, name: data.user.name, email: data.user.email }));
+        showToast('Profile saved! 👤');
+      } else {
+        showToast(data.message || 'Failed to update profile', 'error');
+      }
+    } catch (err) {
+      showToast('Connection error', 'error');
+    }
   };
 
   /* ── Filtered expenses ── */

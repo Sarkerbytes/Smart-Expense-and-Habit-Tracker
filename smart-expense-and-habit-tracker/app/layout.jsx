@@ -1,6 +1,6 @@
 export const metadata = {
   title: 'SmartExpense & Habit Tracker',
-  description: 'Track expenses and build habits – Byte_Builders',
+  description: 'Track expenses and build habits - Byte_Builders',
 };
 
 export default function RootLayout({ children }) {
