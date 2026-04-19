@@ -2,29 +2,44 @@
 import { useState, useEffect } from 'react';
 
 /* ─── localStorage helpers ─── */
-const load = (k, d) => { try { return JSON.parse(localStorage.getItem(k)) ?? d; } catch { return d; } };
-const save = (k, v) => localStorage.setItem(k, JSON.stringify(v));
-const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2);
-const today = () => new Date().toISOString().slice(0, 10);
-const fmt = (n) => '৳' + Number(n).toLocaleString('en-IN', { minimumFractionDigits: 2 });
-const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+//const load = (k, d) => { try { return JSON.parse(localStorage.getItem(k)) ?? d; } catch { return d; } };
+//const save = (k, v) => localStorage.setItem(k, JSON.stringify(v));
+//const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2);
+//const today = () => new Date().toISOString().slice(0, 10);
+//const fmt = (n) => '৳' + Number(n).toLocaleString('en-IN', { minimumFractionDigits: 2 });
+//const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
+const ICONS = {
+  home: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>,
+  expenses: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>,
+  habits: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z"/><path d="m9 12 2 2 4-4"/></svg>,
+  reports: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>,
+  alerts: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>,
+  profile: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>,
+  food: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 8h1a4 4 0 0 1 0 8h-1"/><path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z"/><line x1="6" y1="1" x2="6" y2="4"/><line x1="10" y1="1" x2="10" y2="4"/><line x1="14" y1="1" x2="14" y2="4"/></svg>,
+  transport: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M19 17h2c.6 0 1-.4 1-1v-3c0-.9-.7-1.7-1.5-1.9C18.7 10.6 16 10 16 10s-1.3-1.4-2.2-2.3c-.5-.4-1.1-.7-1.8-.7H5c-.6 0-1.1.4-1.4.9l-1.4 2.9A3.7 3.7 0 0 0 2 12v4c0 .6.4 1 1 1h2"/><circle cx="7" cy="17" r="2"/><path d="M9 17h6"/><circle cx="17" cy="17" r="2"/></svg>,
+  education: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>,
+  shopping: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>,
+  entertainment: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="6" width="20" height="12" rx="2"/><path d="M6 12h4"/><path d="M8 10v4"/><circle cx="15" cy="13" r="1"/><circle cx="18" cy="11" r="1"/></svg>,
+  others: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m21 16-9 5-9-5"/><path d="m21 8-9 5-9-5"/><path d="m3 8 9-5 9 5-9 5z"/></svg>,
+};
 
 const CATS = [
-  { id: 'food', label: 'Food', icon: '🍔', color: '#00ddb5' },
-  { id: 'transport', label: 'Transportation', icon: '🚌', color: '#4f8ef7' },
-  { id: 'education', label: 'Education', icon: '📚', color: '#b06ef3' },
-  { id: 'shopping', label: 'Shopping', icon: '🛍️', color: '#f472b6' },
-  { id: 'entertainment', label: 'Entertainment', icon: '🎮', color: '#f5a623' },
-  { id: 'others', label: 'Others', icon: '📦', color: '#34d399' },
+  { id: 'food', label: 'Food', icon: ICONS.food, color: '#00ddb5' },
+  { id: 'transport', label: 'Transportation', icon: ICONS.transport, color: '#4f8ef7' },
+  { id: 'education', label: 'Education', icon: ICONS.education, color: '#b06ef3' },
+  { id: 'shopping', label: 'Shopping', icon: ICONS.shopping, color: '#f472b6' },
+  { id: 'entertainment', label: 'Entertainment', icon: ICONS.entertainment, color: '#f5a623' },
+  { id: 'others', label: 'Others', icon: ICONS.others, color: '#34d399' },
 ];
 
 const NAV = [
-  { id: 'home', label: 'Dashboard', icon: '🏠' },
-  { id: 'expenses', label: 'Expenses', icon: '💸' },
-  { id: 'habits', label: 'Habits', icon: '🧠' },
-  { id: 'reports', label: 'Reports', icon: '📊' },
-  { id: 'alerts', label: 'Alerts', icon: '🔔' },
-  { id: 'profile', label: 'Profile', icon: '👤' },
+  { id: 'home', label: 'Dashboard', icon: ICONS.home },
+  { id: 'expenses', label: 'Expenses', icon: ICONS.expenses },
+  { id: 'habits', label: 'Habits', icon: ICONS.habits },
+  { id: 'reports', label: 'Reports', icon: ICONS.reports },
+  { id: 'alerts', label: 'Alerts', icon: ICONS.alerts },
+  { id: 'profile', label: 'Profile', icon: ICONS.profile },
 ];
 
 /* ─── Seed demo data if empty ─── */
@@ -73,17 +88,17 @@ function DonutChart({ data, size = 160 }) {
   });
   return (
     <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
-      <circle cx={cx} cy={cy} r={R} fill="none" stroke="rgba(255,255,255,0.04)" strokeWidth={18} />
+      <circle cx={cx} cy={cy} r={R} fill="none" stroke="rgba(255,255,255,0.04)" strokeWidth={12} />
       {slices.map((s, i) => (
         <circle key={i} cx={cx} cy={cy} r={R} fill="none"
-          stroke={s.color} strokeWidth={18}
+          stroke={s.color} strokeWidth={12}
           strokeDasharray={`${s.dash} ${s.gap}`}
           strokeDashoffset={circ * 0.25 * -1}
           transform={`rotate(${s.rotation - 90}, ${cx}, ${cy})`}
           style={{ transition: 'stroke-dasharray 0.6s ease' }} />
       ))}
-      <text x={cx} y={cy - 6} textAnchor="middle" fill="var(--text)" fontSize="13" fontWeight="700" fontFamily="Syne,sans-serif">Total</text>
-      <text x={cx} y={cy + 12} textAnchor="middle" fill="var(--accent-teal)" fontSize="11" fontFamily="DM Sans,sans-serif">{fmt(total)}</text>
+      <text x={cx} y={cy - 6} textAnchor="middle" fill="var(--text)" fontSize="13" fontWeight="600" fontFamily="Inter, sans-serif">Total</text>
+      <text x={cx} y={cy + 14} textAnchor="middle" fill="var(--accent-teal)" fontSize="13" fontWeight="500" fontFamily="Inter, sans-serif">{fmt(total)}</text>
     </svg>
   );
 }
@@ -95,6 +110,10 @@ function BarChart({ bars, height = 100 }) {
   const w = 100 / bars.length;
   return (
     <svg viewBox={`0 0 100 ${height}`} style={{ width: '100%', height }} preserveAspectRatio="none">
+      <g opacity="0.2">
+        <line x1="0" y1={height - 24} x2="100" y2={height - 24} stroke="var(--border)" strokeWidth="0.5" strokeDasharray="2 2" />
+        <line x1="0" y1={(height - 24) / 2} x2="100" y2={(height - 24) / 2} stroke="var(--border)" strokeWidth="0.5" strokeDasharray="2 2" />
+      </g>
       {bars.map((b, i) => {
         const bh = (b.value / max) * (height - 18);
         const x = i * w + w * 0.15;
@@ -105,7 +124,7 @@ function BarChart({ bars, height = 100 }) {
               rx="2" fill={b.color || 'url(#tg)'}
               style={{ transition: 'height 0.5s ease, y 0.5s ease' }} opacity="0.85" />
             <text x={x + bw / 2} y={height - 2} textAnchor="middle"
-              fontSize="5.5" fill="var(--text-muted)" fontFamily="DM Sans,sans-serif">{b.label}</text>
+              fontSize="5.5" fill="var(--text-muted)" fontFamily="Inter, sans-serif">{b.label}</text>
           </g>
         );
       })}
@@ -127,7 +146,14 @@ function Sparkline({ points, color }) {
   const pts = points.map((v, i) => `${i * w},${30 - (v / max) * 28}`).join(' ');
   return (
     <svg viewBox="0 0 100 30" style={{ width: '100%', height: 36 }}>
-      <polyline points={pts} fill="none" stroke={color} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+      <defs>
+        <linearGradient id={`grad-${color.replace('#','')}`} x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor={color} stopOpacity="0.4" />
+          <stop offset="100%" stopColor={color} stopOpacity="0.0" />
+        </linearGradient>
+      </defs>
+      <polygon points={`0,30 ${pts} 100,30`} fill={`url(#grad-${color.replace('#','')})`} />
+      <polyline points={pts} fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
       {points.map((v, i) => (
         <circle key={i} cx={i * w} cy={30 - (v / max) * 28} r="2.5" fill={color} />
       ))}
@@ -275,7 +301,7 @@ export default function DashboardPage() {
         const data = await res.json();
         if (data.success) {
           setExpenses(expenses.map(e => e.id === editingExp ? { ...data.expense, id: data.expense._id } : e));
-          showToast('Expense updated! ✏️');
+          showToast('Expense updated successfully');
         } else {
           showToast(data.message || 'Error updating expense', 'error');
         }
@@ -284,7 +310,7 @@ export default function DashboardPage() {
         const data = await res.json();
         if (data.success) {
           setExpenses([{ ...data.expense, id: data.expense._id }, ...expenses]);
-          showToast('Expense added! 💸');
+          showToast('Expense added successfully');
         } else {
           showToast(data.message || 'Error adding expense', 'error');
         }
@@ -331,7 +357,7 @@ export default function DashboardPage() {
         const data = await res.json();
         if (data.success) {
           setHabits(habits.map(h => h.id === editingHabit ? { ...data.habit, id: data.habit._id } : h));
-          showToast('Habit updated! ✏️');
+          showToast('Habit updated successfully');
         } else {
           showToast(data.message || 'Error updating habit', 'error');
         }
@@ -340,7 +366,7 @@ export default function DashboardPage() {
         const data = await res.json();
         if (data.success) {
           setHabits([{ ...data.habit, id: data.habit._id }, ...habits]);
-          showToast('Habits logged! 🧠');
+          showToast('Habits logged successfully');
         } else {
           showToast(data.message || 'Error logging habit', 'error');
         }
@@ -389,7 +415,7 @@ export default function DashboardPage() {
         setUser(data.user);
         // Also update local storage session name just in case
         localStorage.setItem('se_session', JSON.stringify({ ...session, name: data.user.name, email: data.user.email }));
-        showToast('Profile saved! 👤');
+        showToast('Profile saved successfully');
       } else {
         showToast(data.message || 'Failed to update profile', 'error');
       }
@@ -428,7 +454,7 @@ export default function DashboardPage() {
       {/* ── SIDEBAR ── */}
       <aside className={`sidebar${sidebar ? '' : ' collapsed'}`}>
         <div className="sb-brand">
-          <div className="sb-icon">💹</div>
+          <div className="sb-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2v20"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></div>
           {sidebar && <span className="sb-title">SE-HT</span>}
         </div>
         <nav className="sb-nav">
@@ -481,17 +507,17 @@ export default function DashboardPage() {
           {page === 'home' && (
             <div className="fade-in">
               <div className="page-header">
-                <h2 className="page-title">Welcome back, <span className="grad-text">{user.name.split(' ')[0]}</span> 👋</h2>
+                <h2 className="page-title">Welcome back, <span className="grad-text">{user.name.split(' ')[0]}</span></h2>
                 <p className="page-sub">Here's your financial & habit overview for {months[new Date().getMonth()]} {new Date().getFullYear()}</p>
               </div>
 
               {/* Stat cards */}
               <div className="stat-grid">
                 {[
-                  { label: 'Monthly Budget', val: fmt(user.monthlyBudget), icon: '🏦', color: '#00ddb5', sub: `Set budget` },
-                  { label: 'Total Spent', val: fmt(totalSpent), icon: '💸', color: '#f472b6', sub: `This month` },
-                  { label: 'Remaining', val: fmt(Math.max(0, remaining)), icon: '💰', color: '#4f8ef7', sub: `${savingsPct}% left` },
-                  { label: 'Transactions', val: monthExp.length, icon: '📋', color: '#b06ef3', sub: `This month` },
+                  { label: 'Monthly Budget', val: fmt(user.monthlyBudget), icon: <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 2v20"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>, color: '#00ddb5', sub: `Set budget` },
+                  { label: 'Total Spent', val: fmt(totalSpent), icon: <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect width="20" height="14" x="2" y="5" rx="2"/><line x1="2" x2="22" y1="10" y2="10"/></svg>, color: '#f472b6', sub: `This month` },
+                  { label: 'Remaining', val: fmt(Math.max(0, remaining)), icon: <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><line x1="12" x2="12" y1="8" y2="12"/><line x1="12" x2="16" y1="16" y2="16"/></svg>, color: '#4f8ef7', sub: `${savingsPct}% left` },
+                  { label: 'Transactions', val: monthExp.length, icon: <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect width="8" height="4" x="8" y="2" rx="1" ry="1"/></svg>, color: '#b06ef3', sub: `This month` },
                 ].map((s, i) => (
                   <div key={i} className="stat-card" style={{ '--accent': s.color }}>
                     <div className="stat-icon">{s.icon}</div>
@@ -523,13 +549,13 @@ export default function DashboardPage() {
               <div className="charts-row">
                 {/* Monthly trend */}
                 <div className="card">
-                  <div className="card-head">📈 Monthly Spending Trend</div>
+                  <div className="card-head">Monthly Spending Trend</div>
                   <BarChart bars={monthBars} height={110} />
                 </div>
 
                 {/* Category donut */}
                 <div className="card">
-                  <div className="card-head">🥧 This Month by Category</div>
+                  <div className="card-head">This Month by Category</div>
                   <div style={{ display: 'flex', gap: 16, alignItems: 'center', flexWrap: 'wrap' }}>
                     <DonutChart data={catData} />
                     <div style={{ flex: 1, minWidth: 100 }}>
@@ -549,7 +575,7 @@ export default function DashboardPage() {
               {/* Recent expenses */}
               <div className="card" style={{ marginTop: 18 }}>
                 <div className="card-head" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <span>🕐 Recent Expenses</span>
+                  <span>Recent Expenses</span>
                   <button className="link-btn" onClick={() => setPage('expenses')}>View All →</button>
                 </div>
                 <div className="table-wrap">
@@ -575,7 +601,7 @@ export default function DashboardPage() {
 
               {/* Alerts preview */}
               <div className="card" style={{ marginTop: 18 }}>
-                <div className="card-head">🔔 Smart Alerts</div>
+                <div className="card-head">Smart Alerts</div>
                 {alerts.slice(0, 3).map((a, i) => (
                   <div key={i} className={`alert-row alert-${a.type}`}>
                     <span>{a.icon}</span><span>{a.msg}</span>
@@ -590,7 +616,7 @@ export default function DashboardPage() {
             <div className="fade-in">
               <div className="page-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 12 }}>
                 <div>
-                  <h2 className="page-title">💸 Expense Management</h2>
+                  <h2 className="page-title">Expense Management</h2>
                   <p className="page-sub">Track, edit and delete your daily expenses</p>
                 </div>
                 <button className="primary-btn" onClick={() => { setExpForm({ date: today(), amount: '', category: 'food', description: '' }); setEditingExp(null); setModal('expense'); }}>
@@ -657,7 +683,7 @@ export default function DashboardPage() {
             <div className="fade-in">
               <div className="page-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 12 }}>
                 <div>
-                  <h2 className="page-title">🧠 Habit Tracker</h2>
+                  <h2 className="page-title">Habit Tracker</h2>
                   <p className="page-sub">Monitor your study, sleep, and exercise daily</p>
                 </div>
                 <button className="primary-btn" style={{ background: 'linear-gradient(135deg,#b06ef3,#f472b6)' }}
@@ -669,10 +695,10 @@ export default function DashboardPage() {
               {/* Avg cards */}
               <div className="stat-grid">
                 {[
-                  { label: 'Avg Study', val: `${avgStudyAll}h`, icon: '📚', color: '#b06ef3' },
-                  { label: 'Avg Sleep', val: `${avgSleepAll}h`, icon: '😴', color: '#4f8ef7' },
-                  { label: 'Avg Exercise', val: `${avgExerciseAll}min`, icon: '🏃', color: '#00ddb5' },
-                  { label: 'Days Logged', val: habits.length, icon: '📅', color: '#f5a623' },
+                  { label: 'Avg Study', val: `${avgStudyAll}h`, icon: <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>, color: '#b06ef3' },
+                  { label: 'Avg Sleep', val: `${avgSleepAll}h`, icon: <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M2 4v16"/><path d="M2 8h18a2 2 0 0 1 2 2v10"/><path d="M2 17h20"/><path d="M6 8v9"/></svg>, color: '#4f8ef7' },
+                  { label: 'Avg Exercise', val: `${avgExerciseAll}min`, icon: <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="m11 17 2 2a1 1 0 1 0 3-3"/><path d="m14 14 2.5-2.5a1 1 0 1 0-3-3l-3.88 3.88a3 3 0 0 0-.86 1.65L9 19.5l3-5"/><path d="m16 16 3.5-1.5"/><path d="M16 16v-2"/><circle cx="15" cy="5" r="1"/></svg>, color: '#00ddb5' },
+                  { label: 'Days Logged', val: habits.length, icon: <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>, color: '#f5a623' },
                 ].map((s, i) => (
                   <div key={i} className="stat-card" style={{ '--accent': s.color }}>
                     <div className="stat-icon">{s.icon}</div>
@@ -687,9 +713,9 @@ export default function DashboardPage() {
               {/* Sparklines */}
               <div className="charts-row">
                 {[
-                  { label: '📚 Study Hours (last 14 days)', points: studyPoints, color: '#b06ef3' },
-                  { label: '😴 Sleep Hours (last 14 days)', points: sleepPoints, color: '#4f8ef7' },
-                  { label: '🏃 Exercise (min, last 14 days)', points: exercisePoints, color: '#00ddb5' },
+                  { label: 'Study Hours (last 14 days)', points: studyPoints, color: '#b06ef3' },
+                  { label: 'Sleep Hours (last 14 days)', points: sleepPoints, color: '#4f8ef7' },
+                  { label: 'Exercise (min, last 14 days)', points: exercisePoints, color: '#00ddb5' },
                 ].map((s, i) => (
                   <div key={i} className="card spark-card">
                     <div className="card-head">{s.label}</div>
@@ -732,17 +758,17 @@ export default function DashboardPage() {
           {page === 'reports' && (
             <div className="fade-in">
               <div className="page-header">
-                <h2 className="page-title">📊 Reports & Analytics</h2>
+                <h2 className="page-title">Reports & Analytics</h2>
                 <p className="page-sub">Visual insights into your spending and habits</p>
               </div>
 
               {/* Monthly summary */}
               <div className="stat-grid">
                 {[
-                  { label: 'This Month Spent', val: fmt(totalSpent), icon: '💸', color: '#f472b6' },
-                  { label: 'Budget Remaining', val: fmt(Math.max(0, remaining)), icon: '💰', color: '#00ddb5' },
-                  { label: 'Savings Rate', val: `${savingsPct}%`, icon: '📈', color: '#4f8ef7' },
-                  { label: 'Total All Time', val: fmt(expenses.reduce((s, e) => s + e.amount, 0)), icon: '🏦', color: '#b06ef3' },
+                  { label: 'This Month Spent', val: fmt(totalSpent), icon: <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect width="20" height="14" x="2" y="5" rx="2"/><line x1="2" x2="22" y1="10" y2="10"/></svg>, color: '#f472b6' },
+                  { label: 'Budget Remaining', val: fmt(Math.max(0, remaining)), icon: <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><line x1="12" x2="12" y1="8" y2="12"/><line x1="12" x2="16" y1="16" y2="16"/></svg>, color: '#00ddb5' },
+                  { label: 'Savings Rate', val: `${savingsPct}%`, icon: <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/></svg>, color: '#4f8ef7' },
+                  { label: 'Total All Time', val: fmt(expenses.reduce((s, e) => s + e.amount, 0)), icon: <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 2v20"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>, color: '#b06ef3' },
                 ].map((s, i) => (
                   <div key={i} className="stat-card" style={{ '--accent': s.color }}>
                     <div className="stat-icon">{s.icon}</div>
@@ -757,7 +783,7 @@ export default function DashboardPage() {
               <div className="charts-row" style={{ marginTop: 18 }}>
                 {/* Big bar chart */}
                 <div className="card" style={{ flex: 2 }}>
-                  <div className="card-head">📊 6-Month Spending Trend</div>
+                  <div className="card-head">6-Month Spending Trend</div>
                   <BarChart bars={monthBars} height={140} />
                   <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 8 }}>
                     {monthBars.map((b, i) => (
@@ -770,7 +796,7 @@ export default function DashboardPage() {
 
                 {/* Big donut */}
                 <div className="card" style={{ flex: 1 }}>
-                  <div className="card-head">🥧 Category Breakdown</div>
+                  <div className="card-head">Category Breakdown</div>
                   <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12 }}>
                     <DonutChart data={catData} size={180} />
                     {catData.map(c => (
@@ -789,12 +815,12 @@ export default function DashboardPage() {
 
               {/* Habit report */}
               <div className="card" style={{ marginTop: 18 }}>
-                <div className="card-head">🧠 Habit Trend (Last 14 Days)</div>
+                <div className="card-head">Habit Trend (Last 14 Days)</div>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 16 }}>
                   {[
-                    { label: '📚 Study Hours', points: studyPoints, color: '#b06ef3', unit: 'h' },
-                    { label: '😴 Sleep Hours', points: sleepPoints, color: '#4f8ef7', unit: 'h' },
-                    { label: '🏃 Exercise (min)', points: exercisePoints, color: '#00ddb5', unit: 'm' },
+                    { label: 'Study Hours', points: studyPoints, color: '#b06ef3', unit: 'h' },
+                    { label: 'Sleep Hours', points: sleepPoints, color: '#4f8ef7', unit: 'h' },
+                    { label: 'Exercise (min)', points: exercisePoints, color: '#00ddb5', unit: 'm' },
                   ].map((s, i) => (
                     <div key={i}>
                       <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 6, color: 'var(--text-muted)' }}>{s.label}</div>
@@ -815,17 +841,17 @@ export default function DashboardPage() {
           {page === 'alerts' && (
             <div className="fade-in">
               <div className="page-header">
-                <h2 className="page-title">🔔 Smart Alerts</h2>
+                <h2 className="page-title">Smart Alerts</h2>
                 <p className="page-sub">Rule-based alerts based on your spending and habits</p>
               </div>
 
               <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
                 {alerts.map((a, i) => (
                   <div key={i} className={`alert-card alert-card-${a.type}`}>
-                    <div className="alert-card-icon">{a.icon}</div>
+                    <div className="alert-card-icon">{a.icon === '🚨' ? <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg> : a.icon === '⚠️' ? <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg> : <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>}</div>
                     <div>
                       <div className="alert-card-title">
-                        {a.type === 'danger' ? '⛔ Critical Alert' : a.type === 'warning' ? '⚠️ Warning' : '✅ All Good'}
+                        {a.type === 'danger' ? 'Critical Alert' : a.type === 'warning' ? 'Warning' : 'All Good'}
                       </div>
                       <div className="alert-card-msg">{a.msg}</div>
                     </div>
@@ -835,15 +861,15 @@ export default function DashboardPage() {
 
               {/* How alerts work */}
               <div className="card" style={{ marginTop: 24 }}>
-                <div className="card-head">🤖 How Smart Alerts Work</div>
+                <div className="card-head">How Smart Alerts Work</div>
                 {[
-                  ['🚨', 'Budget Exceeded 90%', 'Triggers when you spend more than 90% of your monthly budget'],
-                  ['⚠️', 'Category Overspend', 'Triggers when a single category exceeds 35% of your budget'],
-                  ['📚', 'Low Study Alert', 'Triggers when average study time drops below 2h/day'],
-                  ['😴', 'Poor Sleep Alert', 'Triggers when average sleep drops below 6h/night'],
+                  [<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>, 'Budget Exceeded 90%', 'Triggers when you spend more than 90% of your monthly budget'],
+                  [<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>, 'Category Overspend', 'Triggers when a single category exceeds 35% of your budget'],
+                  [<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>, 'Low Study Alert', 'Triggers when average study time drops below 2h/day'],
+                  [<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>, 'Poor Sleep Alert', 'Triggers when average sleep drops below 6h/night'],
                 ].map(([icon, title, desc], i) => (
                   <div key={i} className="how-row">
-                    <span style={{ fontSize: 22 }}>{icon}</span>
+                    <span style={{ fontSize: 22, color: 'var(--text-muted)' }}>{icon}</span>
                     <div>
                       <div style={{ fontWeight: 600, fontSize: 14, color: 'var(--text)' }}>{title}</div>
                       <div style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 2 }}>{desc}</div>
@@ -858,7 +884,7 @@ export default function DashboardPage() {
           {page === 'profile' && (
             <div className="fade-in">
               <div className="page-header">
-                <h2 className="page-title">👤 Profile & Settings</h2>
+                <h2 className="page-title">Profile & Settings</h2>
                 <p className="page-sub">Manage your personal info and preferences</p>
               </div>
 
@@ -891,15 +917,15 @@ export default function DashboardPage() {
                 {/* Stats summary */}
                 <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 14 }}>
                   <div className="card">
-                    <div className="card-head">📊 Your Stats</div>
+                    <div className="card-head">Your Stats</div>
                     {[
-                      ['Total Expenses Added', expenses.length, '💸'],
-                      ['Total Habit Logs', habits.length, '🧠'],
-                      ['This Month Spent', fmt(totalSpent), '💰'],
-                      ['Budget Usage', `${Math.min(100, ((totalSpent / Math.max(user.monthlyBudget, 1)) * 100)).toFixed(0)}%`, '📈'],
+                      ['Total Expenses Added', expenses.length, <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect width="20" height="14" x="2" y="5" rx="2"/><line x1="2" x2="22" y1="10" y2="10"/></svg>],
+                      ['Total Habit Logs', habits.length, <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>],
+                      ['This Month Spent', fmt(totalSpent), <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><line x1="12" x2="12" y1="8" y2="12"/><line x1="12" x2="16" y1="16" y2="16"/></svg>],
+                      ['Budget Usage', `${Math.min(100, ((totalSpent / Math.max(user.monthlyBudget, 1)) * 100)).toFixed(0)}%`, <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/></svg>],
                     ].map(([l, v, ic], i) => (
                       <div key={i} className="how-row" style={{ borderBottom: '1px solid var(--border)', paddingBottom: 10, marginBottom: 2 }}>
-                        <span style={{ fontSize: 20 }}>{ic}</span>
+                        <span style={{ fontSize: 20, color: 'var(--text-muted)' }}>{ic}</span>
                         <div style={{ display: 'flex', justifyContent: 'space-between', flex: 1, alignItems: 'center' }}>
                           <span style={{ fontSize: 13, color: 'var(--text-muted)' }}>{l}</span>
                           <span style={{ fontSize: 15, fontWeight: 700, color: 'var(--accent-teal)' }}>{v}</span>
@@ -909,13 +935,13 @@ export default function DashboardPage() {
                   </div>
 
                   <div className="card">
-                    <div className="card-head">🔐 Security</div>
+                    <div className="card-head">Security</div>
                     <div style={{ fontSize: 13, color: 'var(--text-muted)', marginBottom: 16, lineHeight: 1.6 }}>
                       To change your password, contact your administrator or update it through the backend API.
                     </div>
                     <button className="danger-btn" onClick={() => {
                       if (window.confirm('Log out?')) { localStorage.removeItem('se_session'); window.location.href = '/login'; }
-                    }}>🚪 Logout</button>
+                    }}>Logout</button>
                   </div>
                 </div>
               </div>
@@ -934,7 +960,7 @@ export default function DashboardPage() {
             {modal === 'expense' && (
               <>
                 <div className="modal-head">
-                  <span>{editingExp ? '✏️ Edit Expense' : '💸 Add Expense'}</span>
+                  <span>{editingExp ? 'Edit Expense' : 'Add Expense'}</span>
                   <button className="modal-close" onClick={() => { setModal(null); setEditingExp(null); }}>✕</button>
                 </div>
                 <div className="form-group">
@@ -970,7 +996,7 @@ export default function DashboardPage() {
             {modal === 'habit' && (
               <>
                 <div className="modal-head">
-                  <span>{editingHabit ? '✏️ Edit Habit Log' : '🧠 Log Habits'}</span>
+                  <span>{editingHabit ? 'Edit Habit Log' : 'Log Habits'}</span>
                   <button className="modal-close" onClick={() => { setModal(null); setEditingHabit(null); }}>✕</button>
                 </div>
                 <div className="form-group">
@@ -979,17 +1005,17 @@ export default function DashboardPage() {
                     onChange={e => setHabitForm(f => ({ ...f, date: e.target.value }))} />
                 </div>
                 <div className="form-group">
-                  <label className="form-label">📚 Study Hours</label>
+                  <label className="form-label">Study Hours</label>
                   <input className="form-input" type="number" step="0.5" min="0" max="24" placeholder="e.g. 3.5"
                     value={habitForm.study} onChange={e => setHabitForm(f => ({ ...f, study: e.target.value }))} />
                 </div>
                 <div className="form-group">
-                  <label className="form-label">😴 Sleep Hours</label>
+                  <label className="form-label">Sleep Hours</label>
                   <input className="form-input" type="number" step="0.5" min="0" max="24" placeholder="e.g. 7"
                     value={habitForm.sleep} onChange={e => setHabitForm(f => ({ ...f, sleep: e.target.value }))} />
                 </div>
                 <div className="form-group">
-                  <label className="form-label">🏃 Exercise (minutes)</label>
+                  <label className="form-label">Exercise (minutes)</label>
                   <input className="form-input" type="number" step="5" min="0" placeholder="e.g. 30"
                     value={habitForm.exercise} onChange={e => setHabitForm(f => ({ ...f, exercise: e.target.value }))} />
                 </div>
@@ -1008,8 +1034,8 @@ export default function DashboardPage() {
       {showLogoutModal && (
         <div className="modal-overlay" onClick={(e) => { if (e.target === e.currentTarget) setShowLogoutModal(false); }}>
           <div className="modal-box" style={{ maxWidth: 400, textAlign: 'center' }}>
-            <div style={{ fontSize: 48, marginBottom: 12 }}>🚪</div>
-            <div style={{ fontFamily: 'Syne,sans-serif', fontSize: 20, fontWeight: 800, marginBottom: 8 }}>
+            <div style={{ marginBottom: 16, color: 'var(--text)' }}><svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg></div>
+            <div style={{ fontFamily: 'Inter,sans-serif', fontSize: 20, fontWeight: 700, marginBottom: 8 }}>
               Sign Out?
             </div>
             <p style={{ fontSize: 13, color: 'var(--text-muted)', lineHeight: 1.6, marginBottom: 10 }}>
@@ -1049,7 +1075,7 @@ export default function DashboardPage() {
    CSS  (same design language as LoginPage)
 ════════════════════════════════════════════ */
 const CSS = `
-  @import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500;600&display=swap');
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
 
   .db-root {
     --bg:#080b14; --surface:rgba(255,255,255,0.04); --surface-2:rgba(255,255,255,0.08);
@@ -1057,7 +1083,7 @@ const CSS = `
     --accent-teal:#00ddb5; --accent-purple:#b06ef3; --accent-blue:#4f8ef7;
     --card-bg:rgba(12,16,28,0.85); --input-bg:rgba(255,255,255,0.055);
     --input-border:rgba(255,255,255,0.11); --sb-w:220px;
-    font-family:'DM Sans',sans-serif; background:var(--bg); color:var(--text);
+    font-family:'Inter', sans-serif; background:var(--bg); color:var(--text);
     min-height:100vh; display:flex; transition:background .4s,color .4s;
   }
   .db-light {
@@ -1087,7 +1113,7 @@ const CSS = `
     box-shadow:0 0 18px rgba(0,221,181,.3);
   }
   .sb-title {
-    font-family:'Syne',sans-serif; font-weight:800; font-size:17px;
+    font-family:'Inter', sans-serif; font-weight:800; font-size:17px;
     background:linear-gradient(135deg,#00ddb5,#b06ef3);
     -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text;
     white-space:nowrap;
@@ -1096,7 +1122,7 @@ const CSS = `
   .sb-btn {
     display:flex; align-items:center; gap:10px; padding:11px 10px;
     border-radius:12px; border:none; background:transparent; cursor:pointer;
-    font-family:'DM Sans',sans-serif; font-size:13.5px; font-weight:500;
+    font-family:'Inter', sans-serif; font-size:13.5px; font-weight:500;
     color:var(--text-muted); transition:all .25s; white-space:nowrap;
     position:relative; text-align:left;
   }
@@ -1123,7 +1149,7 @@ const CSS = `
   }
   .topbar-left { display:flex; align-items:center; gap:14px; }
   .topbar-right { display:flex; align-items:center; gap:12px; }
-  .topbar-page-name { font-family:'Syne',sans-serif; font-weight:700; font-size:16px; }
+  .topbar-page-name { font-family:'Inter', sans-serif; font-weight:700; font-size:16px; }
   .icon-btn {
     width:38px; height:38px; border-radius:10px; border:1px solid var(--border);
     background:var(--surface); cursor:pointer; font-size:17px; color:var(--text);
@@ -1134,7 +1160,7 @@ const CSS = `
     width:36px; height:36px; border-radius:50%; cursor:pointer;
     background:linear-gradient(135deg,#00ddb5,#b06ef3);
     display:flex; align-items:center; justify-content:center;
-    font-weight:800; font-family:'Syne',sans-serif; font-size:16px; color:#fff;
+    font-weight:800; font-family:'Inter', sans-serif; font-size:16px; color:#fff;
     box-shadow:0 0 14px rgba(0,221,181,.3);
   }
   .topbar-name { display:block; font-size:13.5px; font-weight:600; color:var(--text); }
@@ -1146,11 +1172,11 @@ const CSS = `
   @keyframes fadeIn { from{opacity:0;transform:translateY(8px);} to{opacity:1;transform:translateY(0);} }
 
   .page-header { margin-bottom:22px; }
-  .page-title { font-family:'Syne',sans-serif; font-size:24px; font-weight:800; margin-bottom:4px; }
+  .page-title { font-family:'Inter', sans-serif; font-size:24px; font-weight:800; margin-bottom:4px; }
   .page-sub  { font-size:13px; color:var(--text-muted); }
   .grad-text { background:linear-gradient(135deg,#00ddb5,#b06ef3);
     -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; }
-  .section-title { font-family:'Syne',sans-serif; font-weight:700; font-size:15px;
+  .section-title { font-family:'Inter', sans-serif; font-weight:700; font-size:15px;
     color:var(--text-muted); margin:18px 0 10px; }
 
   /* STAT CARDS */
@@ -1163,7 +1189,7 @@ const CSS = `
   }
   .stat-card:hover { transform:translateY(-2px); box-shadow:0 8px 24px rgba(0,0,0,.25); }
   .stat-icon { font-size:28px; flex-shrink:0; }
-  .stat-val { font-family:'Syne',sans-serif; font-size:20px; font-weight:800; color:var(--accent); }
+  .stat-val { font-family:'Inter', sans-serif; font-size:20px; font-weight:800; color:var(--accent); }
   .stat-label { font-size:12px; color:var(--text-muted); margin-top:2px; }
   .stat-sub { font-size:11px; color:var(--text-muted); opacity:.7; margin-top:2px; }
 
@@ -1171,7 +1197,7 @@ const CSS = `
   .quick-actions { display:flex; gap:10px; flex-wrap:wrap; margin-bottom:20px; }
   .quick-btn {
     padding:11px 20px; border-radius:12px; border:none; cursor:pointer;
-    font-family:'Syne',sans-serif; font-size:13px; font-weight:700; color:#fff;
+    font-family:'Inter', sans-serif; font-size:13px; font-weight:700; color:#fff;
     transition:all .25s; box-shadow:0 4px 16px rgba(0,0,0,.2);
   }
   .quick-btn:hover { transform:translateY(-2px); filter:brightness(1.1); }
@@ -1182,7 +1208,7 @@ const CSS = `
     padding:20px; backdrop-filter:blur(12px);
   }
   .card-head {
-    font-family:'Syne',sans-serif; font-weight:700; font-size:14.5px;
+    font-family:'Inter', sans-serif; font-weight:700; font-size:14.5px;
     margin-bottom:16px; color:var(--text);
   }
 
@@ -1207,7 +1233,7 @@ const CSS = `
   .data-table td { padding:12px 12px; border-bottom:1px solid var(--border); vertical-align:middle; }
   .data-table tr:last-child td { border-bottom:none; }
   .data-table tr:hover td { background:var(--surface); }
-  .amount-cell { font-weight:700; color:var(--accent-teal); font-family:'Syne',sans-serif; }
+  .amount-cell { font-weight:700; color:var(--accent-teal); font-family:'Inter', sans-serif; }
   .cat-badge {
     padding:4px 10px; border-radius:20px; font-size:12px; font-weight:600;
   }
@@ -1239,7 +1265,7 @@ const CSS = `
   .alert-card-warning { background:rgba(245,166,35,.07); border:1px solid rgba(245,166,35,.2); }
   .alert-card-danger  { background:rgba(244,114,182,.07);border:1px solid rgba(244,114,182,.2);}
   .alert-card-icon { font-size:28px; flex-shrink:0; }
-  .alert-card-title { font-family:'Syne',sans-serif; font-weight:700; font-size:15px; margin-bottom:4px; }
+  .alert-card-title { font-family:'Inter', sans-serif; font-weight:700; font-size:15px; margin-bottom:4px; }
   .alert-card-msg { font-size:13px; color:var(--text-muted); line-height:1.5; }
 
   /* FILTERS */
@@ -1273,7 +1299,7 @@ const CSS = `
     width:72px; height:72px; border-radius:50%; margin:0 auto 20px;
     background:linear-gradient(135deg,#00ddb5,#b06ef3);
     display:flex; align-items:center; justify-content:center;
-    font-size:30px; font-weight:800; font-family:'Syne',sans-serif; color:#fff;
+    font-size:30px; font-weight:800; font-family:'Inter', sans-serif; color:#fff;
     box-shadow:0 0 24px rgba(0,221,181,.35);
   }
 
@@ -1286,7 +1312,7 @@ const CSS = `
   .form-input {
     width:100%; padding:11px 13px; background:var(--input-bg);
     border:1.5px solid var(--input-border); border-radius:11px;
-    font-family:'DM Sans',sans-serif; font-size:13.5px; color:var(--text);
+    font-family:'Inter', sans-serif; font-size:13.5px; color:var(--text);
     outline:none; transition:all .25s;
   }
   .form-input::placeholder { color:var(--text-muted); }
@@ -1297,26 +1323,26 @@ const CSS = `
   /* BUTTONS */
   .primary-btn {
     padding:11px 22px; border-radius:12px; border:none; cursor:pointer;
-    font-family:'Syne',sans-serif; font-size:13.5px; font-weight:700; color:#fff;
+    font-family:'Inter', sans-serif; font-size:13.5px; font-weight:700; color:#fff;
     background:linear-gradient(135deg,#00ddb5,#4f8ef7);
     box-shadow:0 4px 18px rgba(0,221,181,.25); transition:all .25s;
   }
   .primary-btn:hover { transform:translateY(-2px); box-shadow:0 8px 26px rgba(0,221,181,.35); }
   .ghost-btn {
     padding:11px 22px; border-radius:12px; border:1px solid var(--border);
-    background:transparent; cursor:pointer; font-family:'DM Sans',sans-serif;
+    background:transparent; cursor:pointer; font-family:'Inter', sans-serif;
     font-size:13.5px; font-weight:600; color:var(--text-muted); transition:all .25s;
   }
   .ghost-btn:hover { border-color:var(--text-muted); color:var(--text); }
   .danger-btn {
     padding:11px 22px; border-radius:12px; border:none; cursor:pointer;
-    font-family:'Syne',sans-serif; font-size:13.5px; font-weight:700; color:#fff;
+    font-family:'Inter', sans-serif; font-size:13.5px; font-weight:700; color:#fff;
     background:linear-gradient(135deg,#f472b6,#f87171); transition:all .25s;
   }
   .danger-btn:hover { transform:translateY(-1px); }
   .link-btn {
     background:none; border:none; cursor:pointer; color:var(--accent-teal);
-    font-family:'DM Sans',sans-serif; font-size:13px; font-weight:600;
+    font-family:'Inter', sans-serif; font-size:13px; font-weight:600;
     transition:opacity .2s;
   }
   .link-btn:hover { opacity:.75; }
@@ -1336,7 +1362,7 @@ const CSS = `
   @keyframes cardIn { from{opacity:0;transform:scale(.94);} to{opacity:1;transform:scale(1);} }
   .modal-head {
     display:flex; justify-content:space-between; align-items:center;
-    font-family:'Syne',sans-serif; font-weight:800; font-size:17px;
+    font-family:'Inter', sans-serif; font-weight:800; font-size:17px;
     margin-bottom:20px;
   }
   .modal-close {
@@ -1368,3 +1394,4 @@ const CSS = `
     .sb-title, .sb-btn span:not(.sb-nav-icon):not(.sb-badge) { display:none; }
   }
 `;
+
