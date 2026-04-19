@@ -282,10 +282,10 @@ export default function LoginPage() {
   const switchTab  = (t) => { setTab(t);  clearMsgs(); };
 
   // ── Redirect screen ──
-  const redirectTo = (emoji, name, sub) => {
+  const redirectTo = (emoji, name, sub, dest = '/dashboard') => {
     setRedirectData({ emoji, name, sub });
     setTimeout(() => {
-      window.location.href = '/dashboard';
+      window.location.href = dest;
     }, 2000);
   };
 
@@ -365,7 +365,7 @@ export default function LoginPage() {
       setLoading(false);
       if (admEmail === ADMIN_EMAIL && admPass === ADMIN_PASS) {
         localStorage.setItem('se_session', JSON.stringify({ name: 'Administrator', email: admEmail, role: 'admin' }));
-        redirectTo('🛡️', 'Admin Access Granted', 'Loading admin panel…');
+        redirectTo('🛡️', 'Admin Access Granted', 'Loading admin panel…', '/admin');
       } else {
         setAdminMsg({ type: 'error', text: 'Invalid admin credentials. Please try again.' });
       }
@@ -551,7 +551,7 @@ export default function LoginPage() {
                   <div className="divider">Hint for testing</div>
                   <div style={{ fontSize: '11.5px', color: 'var(--text-muted)', textAlign: 'center', lineHeight: 1.7 }}>
                     Email: <code style={{ color: 'var(--accent-teal)' }}>admin@smartexpense.com</code><br />
-                    Password: <code style={{ color: 'var(--accent-purple)' }}>Admin@2024</code>
+                    Password: <code style={{ color: 'var(--accent-purple)' }}>Admin@2026</code>
                   </div>
                 </div>
               )}

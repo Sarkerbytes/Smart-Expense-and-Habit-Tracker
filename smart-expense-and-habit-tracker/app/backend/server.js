@@ -19,6 +19,7 @@ app.use(express.json());        // Parse JSON request bodies
 app.use('/api/auth',     require('./routes/authRoutes'));
 app.use('/api/expenses', require('./routes/expenseRoutes'));
 app.use('/api/habits',   require('./routes/habitRoutes'));
+app.use('/api/admin',    require('./routes/adminRoutes'));
 
 // ─── Health check route ─────────────────────────────────────────────────────
 app.get('/', (req, res) => {
