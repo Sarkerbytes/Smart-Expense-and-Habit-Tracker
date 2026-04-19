@@ -977,7 +977,7 @@ export default function DashboardPage() {
                   <label className="form-label">Category</label>
                   <select className="form-input" value={expForm.category}
                     onChange={e => setExpForm(f => ({ ...f, category: e.target.value }))}>
-                    {CATS.map(c => <option key={c.id} value={c.id}>{c.icon} {c.label}</option>)}
+                    {CATS.map(c => <option key={c.id} value={c.id}>{c.label}</option>)}
                   </select>
                 </div>
                 <div className="form-group">
