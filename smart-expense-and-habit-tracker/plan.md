@@ -356,36 +356,37 @@ The following data will be stored in the system database.
 # 11. Recommended Project Folder Structure
 
 The project will follow a monorepo architecture to manage both frontend and backend within a single repository. 
-
-```
-Smart-Expense-and-Habit-Tracker
-│
-├── apps
-│   │
-│   ├── web                 # Next.js Frontend Application
-│   │   ├── app
-│   │   ├── components
-│   │   ├── services
-│   │   ├── utils
-│   │   └── styles
-│   │
-│   └── api                 # Node.js + Express Backend
-│       ├── controllers
-│       ├── routes
-│       ├── models
-│       ├── middleware
-│       ├── config
-│       └── server.js
-│
-├── docs                    # Project documentation
-│
-├── plan.md                 # Project planning document
-├── README.md               # GitHub project overview
-└── package.json
-```
-
 This structure helps maintain:
 
+```
+Smart-Expense-and-Habit-Tracker/
+│
+├── smart-expense-and-habit-tracker/    # Main project folder
+│   ├── app/                            # Next.js pages
+│   │   ├── dashboard/
+│   │   │   └── page.jsx
+│   │   ├── login/
+│   │   │   └── page.jsx
+│   │   ├── admin/
+│   │   │   └── page.jsx
+│   │   └── layout.jsx
+│   │
+│   ├── backend/                        # Node.js + Express
+│   │   ├── controllers/
+│   │   ├── routes/
+│   │   ├── models/
+│   │   ├── middleware/
+│   │   ├── config/
+│   │   └── server.js
+│   │
+│   ├── public/
+│   ├── package.json
+│   ├── next.config.ts
+│   └── plan.md
+│
+├── .gitignore
+└── README.md
+```
 - Code organization
 - Scalability
 - Maintainability
