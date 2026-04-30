@@ -6,7 +6,7 @@ import { useState, useEffect } from 'react';
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
 
 const ADMIN_EMAIL = 'admin@smartexpense.com';
-const ADMIN_PASS  = 'Admin@2026';
+const ADMIN_PASS = 'Admin@2026';
 
 const css = `
   :root {
@@ -235,32 +235,32 @@ const css = `
 // Database functions now replaced with API calls
 
 export default function LoginPage() {
-  const [dark,      setDark]      = useState(true);
-  const [mode,      setMode]      = useState('user');   // 'user' | 'admin'
-  const [tab,       setTab]       = useState('login');  // 'login' | 'signup'
-  const [loading,   setLoading]   = useState(false);
+  const [dark, setDark] = useState(true);
+  const [mode, setMode] = useState('user');   // 'user' | 'admin'
+  const [tab, setTab] = useState('login');  // 'login' | 'signup'
+  const [loading, setLoading] = useState(false);
   const [redirectData, setRedirectData] = useState(null); // { emoji, name, sub }
 
   // Login fields
-  const [loginId,   setLoginId]   = useState('');
+  const [loginId, setLoginId] = useState('');
   const [loginPass, setLoginPass] = useState('');
-  const [showLP,    setShowLP]    = useState(false);
+  const [showLP, setShowLP] = useState(false);
 
   // Signup fields
-  const [regName,   setRegName]   = useState('');
-  const [regEmail,  setRegEmail]  = useState('');
-  const [regPass,   setRegPass]   = useState('');
-  const [showRP,    setShowRP]    = useState(false);
+  const [regName, setRegName] = useState('');
+  const [regEmail, setRegEmail] = useState('');
+  const [regPass, setRegPass] = useState('');
+  const [showRP, setShowRP] = useState(false);
 
   // Admin fields
-  const [admEmail,  setAdmEmail]  = useState('');
-  const [admPass,   setAdmPass]   = useState('');
-  const [showAP,    setShowAP]    = useState(false);
+  const [admEmail, setAdmEmail] = useState('');
+  const [admPass, setAdmPass] = useState('');
+  const [showAP, setShowAP] = useState(false);
 
   // Messages
-  const [loginMsg,  setLoginMsg]  = useState(null);   // { type, text }
+  const [loginMsg, setLoginMsg] = useState(null);   // { type, text }
   const [signupMsg, setSignupMsg] = useState(null);
-  const [adminMsg,  setAdminMsg]  = useState(null);
+  const [adminMsg, setAdminMsg] = useState(null);
 
   // Removed seed demo user as we use real backend now
   useEffect(() => {
@@ -282,7 +282,7 @@ export default function LoginPage() {
   const clearMsgs = () => { setLoginMsg(null); setSignupMsg(null); setAdminMsg(null); };
 
   const switchMode = (m) => { setMode(m); clearMsgs(); };
-  const switchTab  = (t) => { setTab(t);  clearMsgs(); };
+  const switchTab = (t) => { setTab(t); clearMsgs(); };
 
   // ── Redirect screen ──
   const redirectTo = (emoji, name, sub, dest = '/dashboard') => {
@@ -304,12 +304,12 @@ export default function LoginPage() {
       });
       const data = await res.json();
       setLoading(false);
-      
+
       if (data.success) {
-        localStorage.setItem('se_session', JSON.stringify({ 
-          name: data.user.name, 
-          email: data.user.email, 
-          role: 'user', 
+        localStorage.setItem('se_session', JSON.stringify({
+          name: data.user.name,
+          email: data.user.email,
+          role: 'user',
           token: data.token,
           id: data.user.id
         }));
@@ -326,8 +326,8 @@ export default function LoginPage() {
   // ── Signup ──
   const doSignup = async () => {
     if (!regName || !regEmail || !regPass) { setSignupMsg({ type: 'error', text: 'All fields are required.' }); return; }
-    if (!/\S+@\S+\.\S+/.test(regEmail))    { setSignupMsg({ type: 'error', text: 'Please enter a valid email address.' }); return; }
-    if (regPass.length < 6)                 { setSignupMsg({ type: 'error', text: 'Password must be at least 6 characters.' }); return; }
+    if (!/\S+@\S+\.\S+/.test(regEmail)) { setSignupMsg({ type: 'error', text: 'Please enter a valid email address.' }); return; }
+    if (regPass.length < 6) { setSignupMsg({ type: 'error', text: 'Password must be at least 6 characters.' }); return; }
     setLoading(true);
     try {
       const res = await fetch(`${API_BASE}/api/auth/register`, {
@@ -341,10 +341,10 @@ export default function LoginPage() {
       if (data.success) {
         setSignupMsg({ type: 'success', text: 'Account created! Redirecting...' });
         setTimeout(() => {
-          localStorage.setItem('se_session', JSON.stringify({ 
-            name: data.user.name, 
-            email: data.user.email, 
-            role: 'user', 
+          localStorage.setItem('se_session', JSON.stringify({
+            name: data.user.name,
+            email: data.user.email,
+            role: 'user',
             token: data.token,
             id: data.user.id
           }));
@@ -437,7 +437,7 @@ export default function LoginPage() {
             <>
               {/* Mode switch */}
               <div className="mode-switch">
-                <button className={`mode-btn${mode === 'user'  ? ' active' : ''}`} onClick={() => switchMode('user')}>
+                <button className={`mode-btn${mode === 'user' ? ' active' : ''}`} onClick={() => switchMode('user')}>
                   👤 &nbsp;User
                 </button>
                 <button className={`mode-btn${mode === 'admin' ? ' active' : ''}`} onClick={() => switchMode('admin')}>
@@ -449,7 +449,7 @@ export default function LoginPage() {
               {mode === 'user' && (
                 <div>
                   <div className="tab-row">
-                    <button className={`tab-btn${tab === 'login'  ? ' active' : ''}`} onClick={() => switchTab('login')}>Sign In</button>
+                    <button className={`tab-btn${tab === 'login' ? ' active' : ''}`} onClick={() => switchTab('login')}>Sign In</button>
                     <button className={`tab-btn${tab === 'signup' ? ' active' : ''}`} onClick={() => switchTab('signup')}>Create Account</button>
                   </div>
 
@@ -551,11 +551,11 @@ export default function LoginPage() {
                     {loading ? <><span className="spinner" />Processing…</> : 'Admin Sign In →'}
                   </button>
                   <Msg msg={adminMsg} />
-                  <div className="divider">Hint for testing</div>
+                  {/*<div className="divider">Hint for testing</div>
                   <div style={{ fontSize: '11.5px', color: 'var(--text-muted)', textAlign: 'center', lineHeight: 1.7 }}>
                     Email: <code style={{ color: 'var(--accent-teal)' }}>admin@smartexpense.com</code><br />
                     Password: <code style={{ color: 'var(--accent-purple)' }}>Admin@2026</code>
-                  </div>
+                  </div>*/}
                 </div>
               )}
             </>
