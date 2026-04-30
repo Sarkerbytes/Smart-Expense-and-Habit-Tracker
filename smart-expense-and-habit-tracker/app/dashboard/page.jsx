@@ -1,6 +1,9 @@
 'use client';
 import { useState, useEffect } from 'react';
 
+/* ─── API base URL (set NEXT_PUBLIC_API_URL in Vercel env vars) ─── */
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
+
 /* ─── localStorage helpers ─── */
 const load = (k, d) => { try { return JSON.parse(localStorage.getItem(k)) ?? d; } catch { return d; } };
 const save = (k, v) => localStorage.setItem(k, JSON.stringify(v));
@@ -204,9 +207,9 @@ export default function DashboardPage() {
       try {
         const headers = { Authorization: `Bearer ${session.token}` };
         const [uRes, eRes, hRes] = await Promise.all([
-          fetch('http://localhost:5000/api/auth/me', { headers }),
-          fetch('http://localhost:5000/api/expenses', { headers }),
-          fetch('http://localhost:5000/api/habits', { headers }),
+          fetch(`${API_BASE}/api/auth/me`, { headers }),
+          fetch(`${API_BASE}/api/expenses`, { headers }),
+          fetch(`${API_BASE}/api/habits`, { headers }),
         ]);
         const uo = await uRes.json();
         const eo = await eRes.json();
@@ -297,7 +300,7 @@ export default function DashboardPage() {
 
     try {
       if (editingExp) {
-        const res = await fetch(`http://localhost:5000/api/expenses/${editingExp}`, { method: 'PUT', headers, body: JSON.stringify(payload) });
+        const res = await fetch(`${API_BASE}/api/expenses/${editingExp}`, { method: 'PUT', headers, body: JSON.stringify(payload) });
         const data = await res.json();
         if (data.success) {
           setExpenses(expenses.map(e => e.id === editingExp ? { ...data.expense, id: data.expense._id } : e));
@@ -306,7 +309,7 @@ export default function DashboardPage() {
           showToast(data.message || 'Error updating expense', 'error');
         }
       } else {
-        const res = await fetch('http://localhost:5000/api/expenses', { method: 'POST', headers, body: JSON.stringify(payload) });
+        const res = await fetch(`${API_BASE}/api/expenses`, { method: 'POST', headers, body: JSON.stringify(payload) });
         const data = await res.json();
         if (data.success) {
           setExpenses([{ ...data.expense, id: data.expense._id }, ...expenses]);
@@ -324,7 +327,7 @@ export default function DashboardPage() {
   const deleteExpense = async id => {
     const session = load('se_session', null);
     try {
-      const res = await fetch(`http://localhost:5000/api/expenses/${id}`, { method: 'DELETE', headers: { Authorization: `Bearer ${session.token}` } });
+      const res = await fetch(`${API_BASE}/api/expenses/${id}`, { method: 'DELETE', headers: { Authorization: `Bearer ${session.token}` } });
       const data = await res.json();
       if (data.success) {
         setExpenses(expenses.filter(e => e.id !== id));
@@ -353,7 +356,7 @@ export default function DashboardPage() {
 
     try {
       if (editingHabit) {
-        const res = await fetch(`http://localhost:5000/api/habits/${editingHabit}`, { method: 'PUT', headers, body: JSON.stringify(payload) });
+        const res = await fetch(`${API_BASE}/api/habits/${editingHabit}`, { method: 'PUT', headers, body: JSON.stringify(payload) });
         const data = await res.json();
         if (data.success) {
           setHabits(habits.map(h => h.id === editingHabit ? { ...data.habit, id: data.habit._id } : h));
@@ -362,7 +365,7 @@ export default function DashboardPage() {
           showToast(data.message || 'Error updating habit', 'error');
         }
       } else {
-        const res = await fetch('http://localhost:5000/api/habits', { method: 'POST', headers, body: JSON.stringify(payload) });
+        const res = await fetch(`${API_BASE}/api/habits`, { method: 'POST', headers, body: JSON.stringify(payload) });
         const data = await res.json();
         if (data.success) {
           setHabits([{ ...data.habit, id: data.habit._id }, ...habits]);
@@ -380,7 +383,7 @@ export default function DashboardPage() {
   const deleteHabit = async id => {
     const session = load('se_session', null);
     try {
-      const res = await fetch(`http://localhost:5000/api/habits/${id}`, { method: 'DELETE', headers: { Authorization: `Bearer ${session.token}` } });
+      const res = await fetch(`${API_BASE}/api/habits/${id}`, { method: 'DELETE', headers: { Authorization: `Bearer ${session.token}` } });
       const data = await res.json();
       if (data.success) {
         setHabits(habits.filter(h => h.id !== id));
@@ -405,7 +408,7 @@ export default function DashboardPage() {
     if (!session) return;
 
     try {
-      const res = await fetch('http://localhost:5000/api/auth/me', {
+      const res = await fetch(`${API_BASE}/api/auth/me`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${session.token}` },
         body: JSON.stringify({ name: profForm.name, email: profForm.email, monthlyBudget: +profForm.monthlyBudget || 0 })
@@ -1072,7 +1075,7 @@ export default function DashboardPage() {
 }
 
 /* ════════════════════════════════════════════
-   CSS  (same design language as LoginPage)
+   CSS string for dashboard styles
 ════════════════════════════════════════════ */
 const CSS = `
   @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');

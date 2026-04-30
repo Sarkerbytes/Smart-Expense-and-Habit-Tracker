@@ -3,7 +3,9 @@
 import { useState, useEffect, useCallback } from 'react';
 
 const ADMIN_SECRET = 'smartadmin_secret_2026';
-const API = 'http://localhost:5000/api/admin';
+/* API base URL — set NEXT_PUBLIC_API_URL in Vercel env vars */
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
+const API = `${API_BASE}/api/admin`;
 
 const adminHeaders = {
   'Content-Type': 'application/json',

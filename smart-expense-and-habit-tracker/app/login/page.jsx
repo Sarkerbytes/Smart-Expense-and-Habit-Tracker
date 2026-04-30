@@ -2,6 +2,9 @@
 
 import { useState, useEffect } from 'react';
 
+/* API base URL — set NEXT_PUBLIC_API_URL in Vercel env vars */
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
+
 const ADMIN_EMAIL = 'admin@smartexpense.com';
 const ADMIN_PASS  = 'Admin@2026';
 
@@ -294,7 +297,7 @@ export default function LoginPage() {
     if (!loginId || !loginPass) { setLoginMsg({ type: 'error', text: 'Please fill in all fields.' }); return; }
     setLoading(true);
     try {
-      const res = await fetch('http://localhost:5000/api/auth/login', {
+      const res = await fetch(`${API_BASE}/api/auth/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email: loginId, password: loginPass })
@@ -327,7 +330,7 @@ export default function LoginPage() {
     if (regPass.length < 6)                 { setSignupMsg({ type: 'error', text: 'Password must be at least 6 characters.' }); return; }
     setLoading(true);
     try {
-      const res = await fetch('http://localhost:5000/api/auth/register', {
+      const res = await fetch(`${API_BASE}/api/auth/register`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ name: regName, email: regEmail, password: regPass })
